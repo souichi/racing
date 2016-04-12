@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "jsx": "react",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "noImplicitAny": false,
+        "removeComments": true,
+        "noLib": false,
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true
+    },
+    "filesGlob": [
+        "**/*.ts",
+        "**/*.tsx",
+        "!node_modules/**"
+    ],
+    "compileOnSave": false,
+    "buildOnSave": false,
+    "files": [
+        "Game.ts",
+        "State/Boot.ts",
+        "State/Main.ts",
+        "State/Menu.ts",
+        "State/Preload.ts"
+    ],
+    "atom": {
+        "rewriteTsconfig": true
+    }
+}
