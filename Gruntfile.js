@@ -8,7 +8,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     typescript: {
       app: {
-        src: ['app/scripts/Game.ts'],
+        src: ['app/scripts/Game.ts', 'app/scripts/Dto.ts'],
         dest: 'build/js/main.js',
         options: {
           sourceMap: true

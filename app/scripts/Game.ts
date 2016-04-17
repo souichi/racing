@@ -4,6 +4,7 @@
 /// <reference path='State/Preload.ts'/>
 /// <reference path='State/Menu.ts'/>
 /// <reference path='State/Main.ts'/>
+/// <reference path='State/Room.ts'/>
 
 module Racing {
   export class Game extends Phaser.Game {
@@ -14,6 +15,7 @@ module Racing {
       this.state.add('preload', State.Preload);
       this.state.add('menu', State.Menu);
       this.state.add('main', State.Main);
+      this.state.add('room', State.Room);
 
       this.state.start('boot');
     }

@@ -22,11 +22,14 @@
     "compileOnSave": false,
     "buildOnSave": false,
     "files": [
+        "Dto.ts",
         "Game.ts",
         "State/Boot.ts",
         "State/Main.ts",
         "State/Menu.ts",
-        "State/Preload.ts"
+        "State/Preload.ts",
+        "State/Room.ts",
+        "typings/milkcocoa.d.ts"
     ],
     "atom": {
         "rewriteTsconfig": true

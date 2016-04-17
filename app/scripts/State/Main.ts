@@ -1,9 +1,32 @@
+/// <reference path="../typings/milkcocoa.d.ts"/>
+/// <reference path="../Dto.ts" />
+
 module Racing.State {
+  class Car extends Phaser.Sprite {
+    public id: number;
+    constructor(id: number, game: Phaser.Game, x: number, y: number){
+      super(game, x, y, 'car');
+      this.id = id;
+    }
+  }
+
   export class Main extends Phaser.State {
     private map: Phaser.Tilemap;
     private layer: Phaser.TilemapLayer;
-    private car: Phaser.Sprite;
+    private myCar: Phaser.Sprite;
+    private cars: Phaser.Sprite[];
     private cursors: Phaser.CursorKeys;
+    private roomDs: milkcocoa.DataStore<Dto.Room>;
+    private carDs: milkcocoa.DataStore<Dto.Car>;
+
+    private myRoomId: number;
+    private myCarId :number;
+
+    preload() {
+       var milkcocoa = new MilkCocoa('readin2hef9q.mlkcca.com');
+       this.roomDs = milkcocoa.dataStore("room");
+       this.carDs = milkcocoa.dataStore("car");
+    }
 
     create() {
       this.stage.backgroundColor = 0x000000;
@@ -17,37 +40,75 @@ module Racing.State {
 
       this.layer = this.map.createLayer('Ground');
       this.layer.resizeWorld();
-      this.car = this.add.sprite(530, 170, 'car');
-      this.car.anchor.setTo(0.5, 0.5);
-      this.physics.arcade.enable(this.car);
-      this.car.body.collideWorldBounds = true;
-      this.camera.follow(this.car);
+      this.myCar = this.add.sprite(530, 170, 'car');
+      this.myCar.anchor.setTo(0.5, 0.5);
+      this.physics.arcade.enable(this.myCar);
+      this.myCar.body.collideWorldBounds = true;
+      this.camera.follow(this.myCar);
       this.cursors = this.input.keyboard.createCursorKeys();
+
+      this.roomDs.get(this.myRoomId.toString(), (error, data) => {
+        this.cars = new Array<Phaser.Sprite>();
+        for (let i = 0; i < data.value.cars.length; i++) {
+          var carId = data.value.cars[i];
+          if (carId == this.myCarId)
+            continue;
+          var car = this.add.sprite(530, 170, 'car');
+          (<any>car).id = carId;  // TODO:
+          car.anchor.setTo(0.5, 0.5);
+          this.cars.push(car);
+        }
+      });
+
+      this.carDs.on('set', data => {
+        for (let i = 0; i < this.cars.length; i++) {
+          var car = this.cars[i];
+          if ((<any>car).id.toString() != data.id)  // TODO:
+              continue;
+          car.rotation = data.value.rotation;
+          car.position.x = data.value.x;
+          car.position.y = data.value.y;
+        }
+      });
     }
 
     update() {
-      this.physics.arcade.collide(this.car, this.layer);
+      this.physics.arcade.collide(this.myCar, this.layer);
 
-      this.car.body.velocity.x = 0;
-      this.car.body.velocity.y = 0;
-      this.car.body.angularVelocity = 0;
+      this.myCar.body.velocity.x = 0;
+      this.myCar.body.velocity.y = 0;
+      this.myCar.body.angularVelocity = 0;
 
       if (this.cursors.left.isDown) {
-        this.car.body.angularVelocity = -200;
+        this.myCar.body.angularVelocity = -200;
       }
       else if (this.cursors.right.isDown) {
-        this.car.body.angularVelocity = 200;
+        this.myCar.body.angularVelocity = 200;
       }
 
       if (this.cursors.up.isDown) {
-        this.car.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.car.angle, 300));
+        this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, 300));
       } else if (this.cursors.down.isDown) {
-        this.car.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.car.angle, -100));
+        this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
       }
+
+      this.carDs.set(this.myCarId.toString(), {
+        x: this.myCar.position.x,
+        y: this.myCar.position.y,
+        rotation: this.myCar.rotation,
+      });
     }
 
     render() {
-      this.game.debug.spriteInfo(this.car, 10, 10);
+      this.game.debug.spriteInfo(this.myCar, 10, 10);
+    }
+
+    setMyCarId(carId: number) {
+      this.myCarId = carId;
+    }
+
+    setMyRoomId(roomId: number) {
+      this.myRoomId = roomId;
     }
 
     private hit(sprite: Phaser.Sprite, tile: Phaser.Tile) {
