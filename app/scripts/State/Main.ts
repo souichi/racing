@@ -16,6 +16,7 @@ module Racing.State {
     private myCar: Phaser.Sprite;
     private cars: Phaser.Sprite[];
     private cursors: Phaser.CursorKeys;
+    private speed: number;
     private roomDs: milkcocoa.DataStore<Dto.Room>;
     private carDs: milkcocoa.DataStore<Dto.Car>;
 
@@ -46,6 +47,7 @@ module Racing.State {
       this.myCar.body.collideWorldBounds = true;
       this.camera.follow(this.myCar);
       this.cursors = this.input.keyboard.createCursorKeys();
+      this.speed = 300;
 
       this.roomDs.get(this.myRoomId.toString(), (error, data) => {
         this.cars = new Array<Phaser.Sprite>();
@@ -87,7 +89,7 @@ module Racing.State {
       }
 
       if (this.cursors.up.isDown) {
-        this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, 300));
+        this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, this.speed));
       } else if (this.cursors.down.isDown) {
         this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
       }
@@ -112,6 +114,10 @@ module Racing.State {
     }
 
     private hit(sprite: Phaser.Sprite, tile: Phaser.Tile) {
+      this.speed = 400;
+      setTimeout(() =>{
+        this.speed = 300;
+      }, 500);
       tile.alpha = 0.2;
       this.layer.dirty = true;
       return false;

@@ -138,6 +138,7 @@ var Racing;
                 this.myCar.body.collideWorldBounds = true;
                 this.camera.follow(this.myCar);
                 this.cursors = this.input.keyboard.createCursorKeys();
+                this.speed = 300;
                 this.roomDs.get(this.myRoomId.toString(), function (error, data) {
                     _this.cars = new Array();
                     for (var i = 0; i < data.value.cars.length; i++) {
@@ -173,7 +174,7 @@ var Racing;
                     this.myCar.body.angularVelocity = 200;
                 }
                 if (this.cursors.up.isDown) {
-                    this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, 300));
+                    this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, this.speed));
                 }
                 else if (this.cursors.down.isDown) {
                     this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
@@ -194,6 +195,11 @@ var Racing;
                 this.myRoomId = roomId;
             };
             Main.prototype.hit = function (sprite, tile) {
+                var _this = this;
+                this.speed = 400;
+                setTimeout(function () {
+                    _this.speed = 300;
+                }, 500);
                 tile.alpha = 0.2;
                 this.layer.dirty = true;
                 return false;
