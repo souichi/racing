@@ -8,7 +8,8 @@ module Racing.State {
       this.game.stage.backgroundColor = 0xFFFFFF;
 
       // Assign global settings here
-      
+      this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+      this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
       this.game.state.start('preload');
     }
   }

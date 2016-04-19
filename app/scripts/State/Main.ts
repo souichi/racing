@@ -72,6 +72,21 @@ module Racing.State {
           car.position.y = data.value.y;
         }
       });
+
+      setInterval(() => {
+        this.carDs.get(this.myCarId.toString(), (error, data) => {
+          if (error ||
+            data.value.x != this.myCar.position.x ||
+            data.value.y != this.myCar.position.y ||
+            data.value.rotation != this.myCar.rotation) {
+              this.carDs.set(this.myCarId.toString(), {
+                x: this.myCar.position.x,
+                y: this.myCar.position.y,
+                rotation: this.myCar.rotation,
+              });
+            }
+          });
+        }, 100);
     }
 
     update() {
@@ -81,28 +96,22 @@ module Racing.State {
       this.myCar.body.velocity.y = 0;
       this.myCar.body.angularVelocity = 0;
 
-      if (this.cursors.left.isDown) {
+      if (this.cursors.left.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.A)) {
         this.myCar.body.angularVelocity = -200;
       }
-      else if (this.cursors.right.isDown) {
+      else if (this.cursors.right.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
         this.myCar.body.angularVelocity = 200;
       }
 
-      if (this.cursors.up.isDown) {
+      if (this.cursors.up.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.W)) {
         this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, this.speed));
-      } else if (this.cursors.down.isDown) {
+      } else if (this.cursors.down.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.S)) {
         this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
       }
-
-      this.carDs.set(this.myCarId.toString(), {
-        x: this.myCar.position.x,
-        y: this.myCar.position.y,
-        rotation: this.myCar.rotation,
-      });
     }
 
     render() {
-      this.game.debug.spriteInfo(this.myCar, 10, 10);
+      // this.game.debug.spriteInfo(this.myCar, 10, 10);
     }
 
     setMyCarId(carId: number) {
@@ -114,7 +123,7 @@ module Racing.State {
     }
 
     private hit(sprite: Phaser.Sprite, tile: Phaser.Tile) {
-      this.speed = 400;
+      this.speed = 500;
       setTimeout(() =>{
         this.speed = 300;
       }, 500);

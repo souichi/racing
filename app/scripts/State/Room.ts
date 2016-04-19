@@ -3,6 +3,7 @@
 
 module Racing.State {
   export class Room extends Phaser.State {
+    static MAX = 3;
     private sequenceDs: milkcocoa.DataStore<Dto.Sequence>;
     private roomDs: milkcocoa.DataStore<Dto.Room>;
 
@@ -13,8 +14,22 @@ module Racing.State {
     }
 
     create() {
+      var diameter = 100;
+      var margin = this.world.width - (diameter*Room.MAX);
+      console.log("margin:" + margin);
+      for (let i = 0; i < Room.MAX; i++) {
+        var graphics = this.add.graphics(0, 0);
+        graphics.beginFill(0xFF0000, 1);
+        graphics.drawCircle(diameter * i + diameter/2 + margin/2, this.world.centerY, diameter);
+      }
+
       this.roomDs.on("set", data => {
-        if (data.value.cars.length % 2 == 0) {
+        for (let i = 0; i < data.value.cars.length; i++) {
+          var graphics = this.add.graphics(0, 0);
+          graphics.beginFill(0x00FF00, 1);
+          graphics.drawCircle(diameter * i + diameter/2 + margin/2, this.world.centerY, diameter);
+        }
+        if (data.value.cars.length % Room.MAX == 0) {
           if (!data.value.matched) {
             data.value.matched = true;
             this.roomDs.set(data.id.toString(), data.value);

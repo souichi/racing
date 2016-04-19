@@ -19,6 +19,8 @@ var Racing;
             Boot.prototype.create = function () {
                 this.game.stage.backgroundColor = 0xFFFFFF;
                 // Assign global settings here
+                this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+                this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
                 this.game.state.start('preload');
             };
             return Boot;
@@ -161,32 +163,41 @@ var Racing;
                         car.position.y = data.value.y;
                     }
                 });
+                setInterval(function () {
+                    _this.carDs.get(_this.myCarId.toString(), function (error, data) {
+                        if (error ||
+                            data.value.x != _this.myCar.position.x ||
+                            data.value.y != _this.myCar.position.y ||
+                            data.value.rotation != _this.myCar.rotation) {
+                            _this.carDs.set(_this.myCarId.toString(), {
+                                x: _this.myCar.position.x,
+                                y: _this.myCar.position.y,
+                                rotation: _this.myCar.rotation
+                            });
+                        }
+                    });
+                }, 100);
             };
             Main.prototype.update = function () {
                 this.physics.arcade.collide(this.myCar, this.layer);
                 this.myCar.body.velocity.x = 0;
                 this.myCar.body.velocity.y = 0;
                 this.myCar.body.angularVelocity = 0;
-                if (this.cursors.left.isDown) {
+                if (this.cursors.left.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.A)) {
                     this.myCar.body.angularVelocity = -200;
                 }
-                else if (this.cursors.right.isDown) {
+                else if (this.cursors.right.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
                     this.myCar.body.angularVelocity = 200;
                 }
-                if (this.cursors.up.isDown) {
+                if (this.cursors.up.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.W)) {
                     this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, this.speed));
                 }
-                else if (this.cursors.down.isDown) {
+                else if (this.cursors.down.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.S)) {
                     this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
                 }
-                this.carDs.set(this.myCarId.toString(), {
-                    x: this.myCar.position.x,
-                    y: this.myCar.position.y,
-                    rotation: this.myCar.rotation
-                });
             };
             Main.prototype.render = function () {
-                this.game.debug.spriteInfo(this.myCar, 10, 10);
+                // this.game.debug.spriteInfo(this.myCar, 10, 10);
             };
             Main.prototype.setMyCarId = function (carId) {
                 this.myCarId = carId;
@@ -196,7 +207,7 @@ var Racing;
             };
             Main.prototype.hit = function (sprite, tile) {
                 var _this = this;
-                this.speed = 400;
+                this.speed = 500;
                 setTimeout(function () {
                     _this.speed = 300;
                 }, 500);
@@ -227,8 +238,21 @@ var Racing;
             };
             Room.prototype.create = function () {
                 var _this = this;
+                var diameter = 100;
+                var margin = this.world.width - (diameter * Room.MAX);
+                console.log("margin:" + margin);
+                for (var i = 0; i < Room.MAX; i++) {
+                    var graphics = this.add.graphics(0, 0);
+                    graphics.beginFill(0xFF0000, 1);
+                    graphics.drawCircle(diameter * i + diameter / 2 + margin / 2, this.world.centerY, diameter);
+                }
                 this.roomDs.on("set", function (data) {
-                    if (data.value.cars.length % 2 == 0) {
+                    for (var i = 0; i < data.value.cars.length; i++) {
+                        var graphics = _this.add.graphics(0, 0);
+                        graphics.beginFill(0x00FF00, 1);
+                        graphics.drawCircle(diameter * i + diameter / 2 + margin / 2, _this.world.centerY, diameter);
+                    }
+                    if (data.value.cars.length % Room.MAX == 0) {
                         if (!data.value.matched) {
                             data.value.matched = true;
                             _this.roomDs.set(data.id.toString(), data.value);
@@ -263,6 +287,7 @@ var Racing;
                     });
                 });
             };
+            Room.MAX = 3;
             return Room;
         })(Phaser.State);
         State.Room = Room;
