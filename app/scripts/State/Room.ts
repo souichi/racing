@@ -16,7 +16,6 @@ module Racing.State {
     create() {
       var diameter = 100;
       var margin = this.world.width - (diameter*Room.MAX);
-      console.log("margin:" + margin);
       for (let i = 0; i < Room.MAX; i++) {
         var graphics = this.add.graphics(0, 0);
         graphics.beginFill(0xFF0000, 1);
@@ -35,7 +34,18 @@ module Racing.State {
             this.roomDs.set(data.id.toString(), data.value);
           }
           this.roomDs.off('set');
-          this.game.state.start('main');
+          var count = 3;
+          var current = count;
+          var countDownText = this.add.text(this.world.centerX, this.world.centerY, current.toString(), null);
+          countDownText.anchor.set(0.5);
+          var intervalId = setInterval(() => {
+            current--;
+            countDownText.text = current.toString();
+            if (current <= 0) {
+              clearInterval(intervalId);
+              this.game.state.start('main');
+            }
+          }, count * 500);
         }
       });
 
@@ -51,7 +61,8 @@ module Racing.State {
               this.sequenceDs.set('room', { id: roomId });
               var room = <Dto.Room>{
                 matched: false,
-                cars: new Array<number>()
+                cars: new Array<number>(),
+                result: new Array<number>(),
               };
               room.cars.push(carId);
               this.roomDs.set(roomId.toString(), room);

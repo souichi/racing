@@ -105,14 +105,6 @@ var Racing;
 (function (Racing) {
     var State;
     (function (State) {
-        var Car = (function (_super) {
-            __extends(Car, _super);
-            function Car(id, game, x, y) {
-                _super.call(this, game, x, y, 'car');
-                this.id = id;
-            }
-            return Car;
-        })(Phaser.Sprite);
         var Main = (function (_super) {
             __extends(Main, _super);
             function Main() {
@@ -132,6 +124,9 @@ var Racing;
                 this.map.addTilesetImage('Desert', 'tiles');
                 this.map.setCollisionByExclusion([4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 22, 23, 24, 30]);
                 this.map.setTileIndexCallback(31, this.hit, this);
+                this.map.setTileIndexCallback([6, 14, 22], this.checkPoint1, this);
+                this.map.setTileIndexCallback([7, 15, 23], this.checkPoint2, this);
+                this.map.setTileIndexCallback([8, 16, 24], this.checkPoint3, this);
                 this.layer = this.map.createLayer('Ground');
                 this.layer.resizeWorld();
                 this.myCar = this.add.sprite(530, 170, 'car');
@@ -141,6 +136,9 @@ var Racing;
                 this.camera.follow(this.myCar);
                 this.cursors = this.input.keyboard.createCursorKeys();
                 this.speed = 300;
+                this.currentLap = 0;
+                this.lapText = this.add.text(0, 0, this.currentLap + "/" + Main.LAP, null);
+                this.lapText.anchor.set(0.5);
                 this.roomDs.get(this.myRoomId.toString(), function (error, data) {
                     _this.cars = new Array();
                     for (var i = 0; i < data.value.cars.length; i++) {
@@ -151,6 +149,16 @@ var Racing;
                         car.id = carId; // TODO:
                         car.anchor.setTo(0.5, 0.5);
                         _this.cars.push(car);
+                    }
+                });
+                this.roomDs.on('set', function (data) {
+                    if (data.id != _this.myRoomId.toString())
+                        return;
+                    for (var i = 0; i < data.value.result.length; i++) {
+                        if (data.value.result[i] == _this.myCarId) {
+                            alert("あなたは" + (i + 1) + "位でした");
+                            _this.game.state.start('menu');
+                        }
                     }
                 });
                 this.carDs.on('set', function (data) {
@@ -195,9 +203,12 @@ var Racing;
                 else if (this.cursors.down.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.S)) {
                     this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
                 }
+                this.lapText.x = this.camera.x + 50;
+                this.lapText.y = this.camera.y + 50;
             };
             Main.prototype.render = function () {
                 // this.game.debug.spriteInfo(this.myCar, 10, 10);
+                // console.log(this.lapFlg);
             };
             Main.prototype.setMyCarId = function (carId) {
                 this.myCarId = carId;
@@ -215,6 +226,32 @@ var Racing;
                 this.layer.dirty = true;
                 return false;
             };
+            Main.prototype.checkPoint1 = function (sprite, tile) {
+                if (this.lapFlg == 0) {
+                    this.lapFlg = 1;
+                }
+                return false;
+            };
+            Main.prototype.checkPoint2 = function (sprite, tile) {
+                var _this = this;
+                if (this.lapFlg == 1) {
+                    this.currentLap++;
+                    this.lapText.text = this.currentLap + "/" + Main.LAP;
+                    if (Main.LAP <= this.currentLap) {
+                        this.roomDs.get(this.myRoomId.toString(), function (error, data) {
+                            data.value.result.push(_this.myCarId);
+                            _this.roomDs.set(_this.myRoomId.toString(), data.value);
+                        });
+                    }
+                }
+                this.lapFlg = 2;
+                return false;
+            };
+            Main.prototype.checkPoint3 = function (sprite, tile) {
+                this.lapFlg = 0;
+                return false;
+            };
+            Main.LAP = 3;
             return Main;
         })(Phaser.State);
         State.Main = Main;
@@ -240,7 +277,6 @@ var Racing;
                 var _this = this;
                 var diameter = 100;
                 var margin = this.world.width - (diameter * Room.MAX);
-                console.log("margin:" + margin);
                 for (var i = 0; i < Room.MAX; i++) {
                     var graphics = this.add.graphics(0, 0);
                     graphics.beginFill(0xFF0000, 1);
@@ -258,7 +294,18 @@ var Racing;
                             _this.roomDs.set(data.id.toString(), data.value);
                         }
                         _this.roomDs.off('set');
-                        _this.game.state.start('main');
+                        var count = 3;
+                        var current = count;
+                        var countDownText = _this.add.text(_this.world.centerX, _this.world.centerY, current.toString(), null);
+                        countDownText.anchor.set(0.5);
+                        var intervalId = setInterval(function () {
+                            current--;
+                            countDownText.text = current.toString();
+                            if (current <= 0) {
+                                clearInterval(intervalId);
+                                _this.game.state.start('main');
+                            }
+                        }, count * 500);
                     }
                 });
                 this.sequenceDs.get('car', function (error, data) {
@@ -273,7 +320,8 @@ var Racing;
                                 _this.sequenceDs.set('room', { id: roomId });
                                 var room = {
                                     matched: false,
-                                    cars: new Array()
+                                    cars: new Array(),
+                                    result: new Array()
                                 };
                                 room.cars.push(carId);
                                 _this.roomDs.set(roomId.toString(), room);

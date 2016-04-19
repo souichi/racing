@@ -5,7 +5,8 @@ module Racing.Dto {
 
   export class Room {
     matched: boolean;
-    cars: number[]
+    cars: number[];
+    result: number[];
   }
 
   export class Car {

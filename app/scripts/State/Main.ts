@@ -2,21 +2,17 @@
 /// <reference path="../Dto.ts" />
 
 module Racing.State {
-  class Car extends Phaser.Sprite {
-    public id: number;
-    constructor(id: number, game: Phaser.Game, x: number, y: number){
-      super(game, x, y, 'car');
-      this.id = id;
-    }
-  }
-
   export class Main extends Phaser.State {
+    static LAP = 3;
     private map: Phaser.Tilemap;
     private layer: Phaser.TilemapLayer;
     private myCar: Phaser.Sprite;
     private cars: Phaser.Sprite[];
     private cursors: Phaser.CursorKeys;
     private speed: number;
+    private lapText: Phaser.Text;
+    private lapFlg: number;
+    private currentLap: number;
     private roomDs: milkcocoa.DataStore<Dto.Room>;
     private carDs: milkcocoa.DataStore<Dto.Car>;
 
@@ -38,6 +34,9 @@ module Racing.State {
       this.map.addTilesetImage('Desert', 'tiles');
       this.map.setCollisionByExclusion([4,5,6,7,8,12,13,14,15,16,22,23,24,30]);
       this.map.setTileIndexCallback(31, this.hit, this);
+      this.map.setTileIndexCallback([6, 14, 22], this.checkPoint1, this);
+      this.map.setTileIndexCallback([7, 15, 23], this.checkPoint2, this);
+      this.map.setTileIndexCallback([8, 16, 24], this.checkPoint3, this);
 
       this.layer = this.map.createLayer('Ground');
       this.layer.resizeWorld();
@@ -49,6 +48,10 @@ module Racing.State {
       this.cursors = this.input.keyboard.createCursorKeys();
       this.speed = 300;
 
+      this.currentLap = 0;
+      this.lapText = this.add.text(0, 0, this.currentLap + "/" + Main.LAP, null);
+      this.lapText.anchor.set(0.5);
+
       this.roomDs.get(this.myRoomId.toString(), (error, data) => {
         this.cars = new Array<Phaser.Sprite>();
         for (let i = 0; i < data.value.cars.length; i++) {
@@ -59,6 +62,17 @@ module Racing.State {
           (<any>car).id = carId;  // TODO:
           car.anchor.setTo(0.5, 0.5);
           this.cars.push(car);
+        }
+      });
+
+      this.roomDs.on('set', data => {
+        if (data.id != this.myRoomId.toString())
+          return;
+        for (let i = 0; i < data.value.result.length; i++) {
+          if (data.value.result[i] == this.myCarId) {
+            alert("あなたは" + (i + 1) + "位でした");
+            this.game.state.start('menu');
+          }
         }
       });
 
@@ -108,10 +122,14 @@ module Racing.State {
       } else if (this.cursors.down.isDown || this.game.input.keyboard.isDown(Phaser.Keyboard.S)) {
         this.myCar.body.velocity.copyFrom(this.physics.arcade.velocityFromAngle(this.myCar.angle, -100));
       }
+
+      this.lapText.x = this.camera.x + 50;
+      this.lapText.y = this.camera.y + 50;
     }
 
     render() {
       // this.game.debug.spriteInfo(this.myCar, 10, 10);
+      // console.log(this.lapFlg);
     }
 
     setMyCarId(carId: number) {
@@ -129,6 +147,33 @@ module Racing.State {
       }, 500);
       tile.alpha = 0.2;
       this.layer.dirty = true;
+      return false;
+    }
+
+    private checkPoint1(sprite: Phaser.Sprite, tile: Phaser.Tile) {
+      if (this.lapFlg == 0) {
+          this.lapFlg = 1;
+      }
+      return false;
+    }
+
+    private checkPoint2(sprite: Phaser.Sprite, tile: Phaser.Tile) {
+      if (this.lapFlg == 1) {
+        this.currentLap++;
+        this.lapText.text = this.currentLap + "/" + Main.LAP;
+        if (Main.LAP <= this.currentLap) {
+            this.roomDs.get(this.myRoomId.toString(), (error, data) =>{
+              data.value.result.push(this.myCarId);
+              this.roomDs.set(this.myRoomId.toString(), data.value);
+            });
+        }
+      }
+      this.lapFlg = 2;
+      return false;
+    }
+
+    private checkPoint3(sprite: Phaser.Sprite, tile: Phaser.Tile) {
+      this.lapFlg = 0;
       return false;
     }
   }
